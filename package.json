@@ -1,7 +1,7 @@
 {
   "name": "t-blao",
   "version": "0.2.0",
-  "description": "T-blao - Trinh tai video/audio da nen tang",
+  "description": "Mivio - Trinh tai va xu ly video/audio da nen tang",
   "main": "./out/main/index.js",
   "author": "Vinh Bui",
   "license": "MIT",
