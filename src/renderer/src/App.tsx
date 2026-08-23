@@ -164,7 +164,7 @@ export default function App(): JSX.Element {
     <div className="shell">
       <header className="sidebar">
         <div className="side-brand">
-          <span className="side-logo">T-blao</span>
+          <span className="side-logo">Mivio</span>
         </div>
         <nav className="side-nav">{TABS.map(renderTab)}</nav>
         <div className="side-bottom">

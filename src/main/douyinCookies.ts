@@ -32,7 +32,7 @@ export function captureDyCookies(
     const win = new BrowserWindow({
       width: 1000,
       height: 720,
-      title: 'Đăng nhập Douyin — T-blao',
+      title: 'Đăng nhập Douyin — Mivio',
       autoHideMenuBar: true,
       webPreferences: {
         partition: DY_PARTITION,

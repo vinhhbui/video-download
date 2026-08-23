@@ -42,7 +42,7 @@ export default function SetupScreen({ onDone }: Props): JSX.Element {
       <div className="card setup-card">
         <h2>Cài đặt công cụ</h2>
         <p className="muted">
-          T-blao cần cài thêm vài thành phần để tải và xử lý video. Ứng dụng sẽ tự tải về những
+          Mivio cần cài thêm vài thành phần để tải và xử lý video. Ứng dụng sẽ tự tải về những
           thành phần còn thiếu (không cần quyền admin).
         </p>
 

@@ -200,13 +200,13 @@ export default function License(): JSX.Element {
         </p>
       </div>
 
-      {/* Giay phep T-blao */}
+      {/* Giay phep Mivio */}
       <section className="lic-section">
-        <h3>Giấy phép T-blao</h3>
+        <h3>Giấy phép Mivio</h3>
         <p className="muted small">
-          T-blao là phần mềm mã nguồn mở. Bấm để xem chi tiết giấy phép.
+          Mivio là phần mềm mã nguồn mở. Bấm để xem chi tiết giấy phép.
         </p>
-        <LicCard title="T-blao" badge="MIT">
+        <LicCard title="Mivio" badge="MIT">
           <pre className="license-text">{MIT_LICENSE}</pre>
         </LicCard>
       </section>
@@ -215,7 +215,7 @@ export default function License(): JSX.Element {
       <section className="lic-section">
         <h3>Thành phần bên thứ ba</h3>
         <p className="muted small">
-          T-blao được dựng trên các công trình mã nguồn mở dưới đây. Bản quyền thuộc về tác giả gốc.
+          Mivio được dựng trên các công trình mã nguồn mở dưới đây. Bản quyền thuộc về tác giả gốc.
           Bấm từng mục để xem chi tiết.
         </p>
         {GROUPS.map((g) => (
