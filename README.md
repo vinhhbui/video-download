@@ -1,6 +1,6 @@
-# T-blao
+# Mivio
 
-Trình tải video & audio đa nền tảng — chạy trên **Windows** và **macOS**.
+Trình tải và xử lý video & audio đa nền tảng — chạy trên **Windows** và **macOS**.
 
 Xây bằng **Electron + React + TypeScript** (electron-vite).
 
@@ -52,11 +52,11 @@ src/
 
 ## Giấy phép
 
-T-blao phát hành theo giấy phép **MIT** — xem [LICENSE](LICENSE).
+Mivio phát hành theo giấy phép **MIT** — xem [LICENSE](LICENSE).
 
 ### Ghi công (bên thứ ba)
 
-T-blao dùng các công cụ mã nguồn mở, được tải/dựng lúc chạy (không kèm trong repo):
+Mivio dùng các công cụ mã nguồn mở, được tải/dựng lúc chạy (không kèm trong repo):
 
 - **ffmpeg** — xử lý & ghép âm thanh/video. Giấy phép **LGPL/GPL**: <https://ffmpeg.org/legal.html>
 - Bộ tải xuống mã nguồn mở (giấy phép Unlicense / phạm vi công cộng).
