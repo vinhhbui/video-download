@@ -23,7 +23,7 @@ const isMac = process.platform === 'darwin'
  * Release asset nen de dang PRERELEASE cho khoi tranh "latest" cua auto-update.
  */
 export const ASSET_TAG = 'assets-v1'
-export const ASSET_BASE = `https://github.com/NeeyuBL/neeyut-blao/releases/download/${ASSET_TAG}`
+export const ASSET_BASE = `https://github.com/vinhhbui/video-download/releases/download/${ASSET_TAG}`
 
 /** Thu muc luu binaries tai ve, nam trong userData (khong can quyen admin). */
 export function binDir(): string {
@@ -188,7 +188,7 @@ async function installFfmpeg(onProgress: ProgressCb): Promise<void> {
     // MOI NHAT -> nvenc yeu cau driver rat moi (vd 610) ma DA SO may chua co ->
     // nvenc chet, ghep phu de chi chay CPU. Da do that: ban 2026-05-18 (gyan,
     // nv-codec-headers cu hon) nvenc CHAY tren driver 581 -> GPU 18s vs CPU 62s.
-    // Host tren release rieng (github NeeyuBL/neeyut-blao) de KHOA phien ban ffmpeg
+    // Host tren release rieng cua Mivio (github vinhhbui/video-download) de KHOA phien ban ffmpeg
     // tuong thich rong, khong bi day len bleeding-edge. -> PHAI upload ffmpeg-win.zip.
     const url = `${ASSET_BASE}/ffmpeg-win.zip`
     await downloadFile(url, tmpZip, (p) =>
