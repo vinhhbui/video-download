@@ -44,6 +44,9 @@ async function ensureDir(): Promise<void> {
 //     vuc — "Video unavailable ... not available in your country" -> bao nham
 //     la "dich vu qua tai", user di sua nham cho.)
 const NHAN_LOI: [RegExp, string][] = [
+  [/WinError 10013|socket.*forbidden by.*access permissions|WSAEACCES/i, 'kết nối bị Windows hoặc phần mềm bảo mật chặn'],
+  [/cannot parse data/i, 'Facebook chưa cho phép đọc video này; hãy đăng nhập rồi thử lại'],
+  [/impersonate target .*not available|missing dependencies.*impersonat/i, 'bộ tải chưa có hỗ trợ trình duyệt cần cho Facebook; hãy cập nhật công cụ tải'],
   [/\b429\b|rate.?limit|quota|resource.?exhausted/i, 'api_429 — vượt hạn mức, thử lại sau'],
   [/\b503\b|overloaded|service unavailable/i, 'api_503 — dịch vụ đang quá tải'],
   [/\b40[13]\b|api.?key|permission|unauthorized/i, 'api_403 — khoá không hợp lệ'],

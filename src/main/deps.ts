@@ -83,8 +83,10 @@ export async function resolveYtDlp(): Promise<string | null> {
 /** Tra ve duong dan ffmpeg dung duoc: bundled -> PATH. Null neu khong co. */
 export async function resolveFfmpeg(): Promise<string | null> {
   const local = join(binDir(), exe('ffmpeg'))
-  if (await fileExists(local)) return local
-  if (await canRun('ffmpeg')) return 'ffmpeg'
+  // FFmpeg accepts `-version`; `--version` fails on Windows and used to make
+  // the setup screen treat a working installation as missing.
+  if (await canRun(local, ['-version'])) return local
+  if (await canRun('ffmpeg', ['-version'])) return 'ffmpeg'
   return null
 }
 

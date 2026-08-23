@@ -12,7 +12,7 @@ import License from './components/License'
 import Logs from './components/Logs'
 import type { UpdateStatus } from '../../shared/types'
 
-const REPO_URL = 'https://github.com/NeeyuBL/neeyut-blao'
+const REPO_URL = 'https://github.com/vinhhbui/video-download'
 
 type Stage = 'checking' | 'setup' | 'ready'
 type TabKey = 'download' | 'douyin' | 'audiotext' | 'screen' | 'automation' | 'insights' | 'videos' | 'logs' | 'license'

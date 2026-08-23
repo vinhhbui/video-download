@@ -4,6 +4,13 @@ import { mkdir, copyFile, readFile, writeFile, stat, rm } from 'node:fs/promises
 import { tmpdir } from 'node:os'
 import { resolveFfmpeg } from './deps'
 import { debugRaw, errLabel, logInfo } from './logger'
+import {
+  formatAssTimestamp,
+  formatSrtTimestamp,
+  parseSrt,
+  parseSubtitleTimestamp,
+  subtitleDuration
+} from '../shared/subtitles'
 import type { BurnReq, BurnProgress, BurnResult, CoChu } from '../shared/types'
 
 let child: ChildProcess | null = null
@@ -192,31 +199,21 @@ interface Cue {
  * tinh bo cuc cung can dem so ky tu de biet chu se xuong may dong.
  */
 export function docSrt(srtRaw: string): Cue[] {
-  const out: Cue[] = []
-  // Moi khoi = so thu tu / moc "a --> b" / cac dong chu.
-  for (const k of srtRaw.replace(/^﻿/, '').split(/\r?\n\r?\n+/)) {
-    const dong = k
+  return parseSrt(srtRaw).cues.map((cue) => ({
+    a: formatSrtTimestamp(cue.start),
+    b: formatSrtTimestamp(cue.end),
+    chu: cue.text
       .split(/\r?\n/)
-      .map((s) => s.trim())
+      .map((line) => line.trim())
       .filter(Boolean)
-    const iMoc = dong.findIndex((d) => d.includes('-->'))
-    if (iMoc < 0) continue
-    const [a, b] = dong[iMoc].split('-->')
-    const chu = dong
-      .slice(iMoc + 1)
       .join('\\N')
-      .replace(/[{}]/g, '') // { } la ky tu dieu khien cua .ass -> bo di
-    if (!chu) continue
-    out.push({ a, b, chu })
-  }
-  return out
+      .replace(/[{}]/g, '')
+  }))
 }
 
 /** Moc thoi gian .srt "HH:MM:SS,mmm" -> so giay. Hong thi tra 0. */
 function giay(t: string): number {
-  const m = /(\d+):(\d+):(\d+)[,.](\d+)/.exec(t.trim())
-  if (!m) return 0
-  return Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) + Number(m[4]) / 1000
+  return parseSubtitleTimestamp(t) ?? 0
 }
 
 /**
@@ -225,10 +222,7 @@ function giay(t: string): number {
  */
 export async function srtGiay(duong: string): Promise<number> {
   try {
-    const cues = docSrt(await readFile(duong, 'utf8'))
-    let max = 0
-    for (const c of cues) max = Math.max(max, giay(c.b))
-    return max
+    return subtitleDuration(parseSrt(await readFile(duong, 'utf8')).cues)
   } catch {
     return 0
   }
@@ -236,11 +230,7 @@ export async function srtGiay(duong: string): Promise<number> {
 
 /** So giay -> moc .srt "HH:MM:SS,mmm". */
 function mocSrt(s: number): string {
-  const ms = Math.max(0, Math.round(s * 1000))
-  const p = (n: number, d = 2): string => String(n).padStart(d, '0')
-  return `${p(Math.floor(ms / 3600000))}:${p(Math.floor((ms % 3600000) / 60000))}:${p(
-    Math.floor((ms % 60000) / 1000)
-  )},${p(ms % 1000, 3)}`
+  return formatSrtTimestamp(s)
 }
 
 /**
@@ -269,10 +259,7 @@ export function catSrtTheoVideo(cues: Cue[], giayVideo: number): string {
 
 /** Doi mot moc thoi gian .srt "HH:MM:SS,mmm" -> .ass "H:MM:SS.cc". */
 function gioAss(t: string): string {
-  const m = /(\d+):(\d+):(\d+)[,.](\d+)/.exec(t.trim())
-  if (!m) return '0:00:00.00'
-  const cs = Math.round(Number((m[4] + '00').slice(0, 3)) / 10)
-  return `${Number(m[1])}:${m[2]}:${m[3]}.${String(cs).padStart(2, '0')}`
+  return formatAssTimestamp(giay(t))
 }
 
 /**

@@ -28,5 +28,5 @@ mac:
 # LUU Y: owner/repo phai TRUNG repo that ma ban up Release len.
 publish:
   provider: github
-  owner: NeeyuBL
-  repo: neeyut-blao
+  owner: vinhhbui
+  repo: video-download

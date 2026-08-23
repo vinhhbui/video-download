@@ -1,10 +1,18 @@
 {
   "name": "t-blao",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "T-blao - Trinh tai video/audio da nen tang",
   "main": "./out/main/index.js",
-  "author": "NeeyuBL",
+  "author": "Vinh Bui",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vinhhbui/video-download.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vinhhbui/video-download/issues"
+  },
+  "homepage": "https://github.com/vinhhbui/video-download#readme",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

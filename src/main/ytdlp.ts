@@ -54,6 +54,32 @@ async function ytdlpCmd(): Promise<string> {
   return cmd
 }
 
+function isFacebookUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '')
+    return host === 'facebook.com' || host.endsWith('.facebook.com') || host === 'fb.watch'
+  } catch {
+    return false
+  }
+}
+
+let facebookImpersonationProbe: Promise<boolean> | null = null
+
+/**
+ * Facebook frequently rejects requests that do not look like a supported browser.
+ * The probe is cached and the workaround is only enabled when the installed
+ * yt-dlp binary explicitly reports an available curl_cffi browser target.
+ */
+async function facebookRequestArgs(cmd: string, url: string): Promise<string[]> {
+  if (!isFacebookUrl(url)) return []
+  if (!facebookImpersonationProbe) {
+    facebookImpersonationProbe = run(cmd, ['--list-impersonate-targets'])
+      .then((result) => result.code === 0 && /curl_cffi/i.test(`${result.stdout}\n${result.stderr}`))
+      .catch(() => false)
+  }
+  return (await facebookImpersonationProbe) ? ['--impersonate='] : []
+}
+
 function secondsToString(s: number | null): string | null {
   if (s == null || !isFinite(s)) return null
   const h = Math.floor(s / 3600)
@@ -84,6 +110,7 @@ export async function fetchInfo(
 ): Promise<VideoInfo> {
   const cmd = await ytdlpCmd()
   const args = ['-J', '--no-warnings', '--no-playlist']
+  args.push(...(await facebookRequestArgs(cmd, url)))
   if (cookiesFile) args.push('--cookies', cookiesFile)
   if (proxy) args.push('--proxy', proxy)
   args.push(url)
@@ -147,6 +174,7 @@ export async function fetchPlaylist(
 ): Promise<PlaylistProbe> {
   const cmd = await ytdlpCmd()
   const args = ['-J', '--flat-playlist', '--no-warnings']
+  args.push(...(await facebookRequestArgs(cmd, url)))
   if (cookiesFile) args.push('--cookies', cookiesFile)
   if (proxy) args.push('--proxy', proxy)
   args.push(url)
@@ -195,7 +223,7 @@ const PROG = 'TBLAOPROG'
 const PP_TAGS = ['[Merger]', '[ExtractAudio]', '[EmbedThumbnail]', '[Metadata]', '[VideoConvertor]']
 
 /** Dung lenh yt-dlp tu DownloadRequest. */
-function buildArgs(req: DownloadRequest, ffLoc: string | null): string[] {
+async function buildArgs(req: DownloadRequest, ffLoc: string | null, cmd: string): Promise<string[]> {
   const args: string[] = []
 
   // Output: <thu muc>/<mau ten file>
@@ -255,6 +283,8 @@ function buildArgs(req: DownloadRequest, ffLoc: string | null): string[] {
 
   if (req.cookiesFile) args.push('--cookies', req.cookiesFile)
   if (req.proxy) args.push('--proxy', req.proxy)
+
+  args.push(...(await facebookRequestArgs(cmd, req.url)))
 
   args.push(req.url)
   return args
@@ -371,7 +401,7 @@ export async function download(
   const cmd = await ytdlpCmd()
   const ffLoc = await ffmpegLocation()
   logInfo(`Bắt đầu tải từ ${domainOf(req.url)}…`)
-  const args = buildArgs(req, ffLoc)
+  const args = await buildArgs(req, ffLoc, cmd)
   // Dong lenh day du lo: duong dan cong cu, TEN cong cu (thu tab Giay phep co
   // tinh giau), duong dan file cookie, proxy, URL. Chi cho console luc dev.
   debugRaw('ytdlp cmd', `${cmd} ${args.join(' ')}`)
@@ -382,7 +412,7 @@ export async function download(
   if (!result.ok && req.cookiesFile && /403|forbidden/i.test(result.error ?? '')) {
     logInfo('Tải lỗi 403 khi dùng cookie — thử lại KHÔNG cookie…')
     const req2: DownloadRequest = { ...req, cookiesFile: null }
-    const args2 = buildArgs(req2, ffLoc)
+    const args2 = await buildArgs(req2, ffLoc, cmd)
     result = await runYtdlpDownload(cmd, args2, id, req2, onProgress)
     if (result.ok) logInfo('Thử lại không cookie: thành công.')
   }
