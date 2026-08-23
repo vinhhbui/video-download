@@ -52,12 +52,15 @@ import { detectGpu } from './gpu'
 import { checkKey, hasKey, saveKey, translateSrt } from './gemini'
 import { cancelOcr, installOcrEngine, ocrEngineStatus, ocrVideo } from './ocr'
 import { burnSubtitle, cancelBurn, srtGiay } from './burn'
+import { runAutoPipeline } from './autoPipeline'
+import { analyzeTrends, runTrendInsights } from './insights'
+import { listManagedTrendVideos, updateTrendVideoStatus } from './trendDatabase'
 import {
   captureDyCookies,
   clearDyCookies,
   dyCookieStatus
 } from './douyinCookies'
-import { DouyinRequest, WhisperRequest } from '../shared/types'
+import { AutoPipelineRequest, DouyinRequest, TrendInsightRequest, TrendVideoStatusUpdate, WhisperRequest } from '../shared/types'
 import {
   clearLogs,
   debugRaw,
@@ -98,7 +101,8 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      backgroundThrottling: false
     }
   })
 
@@ -357,6 +361,19 @@ function registerIpc(): void {
   })
   ipcMain.handle('douyin:channels', async () => getChannels())
   ipcMain.handle('douyin:removeChannel', async (_e, url: string) => removeChannel(url))
+
+  // ---- Automated local pipeline ----
+  ipcMain.handle('automation:run', async (event, id: string, req: AutoPipelineRequest) =>
+    runAutoPipeline(id, req, (p) => event.sender.send('automation:progress', p))
+  )
+
+  // ---- Local trend insights ----
+  ipcMain.handle('insights:analyze', async (_event, req: TrendInsightRequest) => analyzeTrends(req))
+  ipcMain.handle('insights:run', async (event, req: TrendInsightRequest) =>
+    runTrendInsights(req, (progress) => event.sender.send('insights:progress', progress))
+  )
+  ipcMain.handle('insights:videos', async (_event, dataDir: string) => listManagedTrendVideos(dataDir))
+  ipcMain.handle('insights:updateVideoStatus', async (_event, update: TrendVideoStatusUpdate) => updateTrendVideoStatus(update))
 
   // ---- Audio -> Text (whisper) ----
   ipcMain.handle('whisper:engineStatus', async () => whisperEngineStatus())

@@ -1,6 +1,6 @@
 import { app } from 'electron'
 import { spawn } from 'node:child_process'
-import { access, chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, chmod, mkdir, readFile, writeFile, readdir, stat } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { join } from 'node:path'
 import { ASSET_BASE, binDir, downloadFile } from './deps'
@@ -99,6 +99,37 @@ async function writeConfig(req: DouyinRequest, cookies: Record<string, string>):
   return p
 }
 
+const VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.mkv', '.mov', '.avi', '.m4v', '.ts', '.flv'])
+
+/** Find video files created by the download engine during one request. */
+async function findDownloadedVideos(dir: string, startedAt: number): Promise<string[]> {
+  const found: string[] = []
+  const walk = async (current: string): Promise<void> => {
+    let entries
+    try {
+      entries = await readdir(current, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const full = join(current, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full)
+        continue
+      }
+      const ext = entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase()
+      if (!VIDEO_EXTENSIONS.has(ext)) continue
+      try {
+        if ((await stat(full)).mtimeMs >= startedAt - 2_000) found.push(full)
+      } catch {
+        /* Ignore files that disappear while the engine is finishing. */
+      }
+    }
+  }
+  await walk(dir)
+  return found.sort()
+}
+
 /** Tai Douyin: spawn engine, doc stdout+stderr, parse tien do + tong ket. */
 export async function downloadDouyin(
   id: string,
@@ -120,6 +151,7 @@ export async function downloadDouyin(
 
   const cookies = await readDyCookies()
   const cfgPath = await writeConfig(req, cookies)
+  const startedAt = Date.now()
   // Khong ghi URL — nhat ky khong can biet user tai kenh/video nao
   logInfo(`Douyin: bắt đầu tải (kiểu: ${req.mode})`)
 
@@ -192,14 +224,15 @@ export async function downloadDouyin(
       resolve({ id, ok: false, total, success, failed, skipped, error: nhan })
     })
 
-    child.on('close', (code) => {
+    child.on('close', async (code) => {
       if (outBuf) handleLine(outBuf)
       if (errBuf) handleLine(errBuf)
       if (code === 0) {
         logInfo(`Douyin: hoàn tất — thành công ${success}/${total || success}`)
         onProgress({ id, status: 'finished', line: null, lastFile, success })
         if (req.isChannel) void recordChannel(req.url, req.outputDir, success)
-        resolve({ id, ok: true, total: total || success, success, failed, skipped, error: null })
+        const files = await findDownloadedVideos(req.outputDir, startedAt)
+        resolve({ id, ok: true, total: total || success, success, failed, skipped, files, error: null })
       } else {
         const raw = errTail || errBuf.trim().split(/\r?\n/).slice(-2).join(' ') || `code ${code}`
         debugRaw('douyin close', raw)

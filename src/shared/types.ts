@@ -127,6 +127,7 @@ export interface DouyinResult {
   success: number
   failed: number
   skipped: number
+  files?: string[]
   error: string | null
 }
 
@@ -245,6 +246,236 @@ export interface BurnResult {
   ok: boolean
   output?: string
   error?: string
+}
+
+// ---- Automated Douyin to Vietnamese video pipeline ----
+export type AutoPipelinePhase = 'downloading' | 'transcribing' | 'translating' | 'rendering' | 'finished' | 'error'
+
+export interface AutoPipelineRequest {
+  url: string
+  outputDir: string
+  model: 'base' | 'small' | 'medium'
+  useGpu: boolean
+}
+
+export interface AutoPipelineProgress {
+  id: string
+  phase: AutoPipelinePhase
+  message: string
+  percent: number
+  current: number
+  total: number
+}
+
+export interface AutoPipelineResult {
+  id: string
+  ok: boolean
+  outputs: string[]
+  error: string | null
+}
+
+// ---- Local category trend insights ----
+export type TrendCategory = 'all' | 'education' | 'technology' | 'beauty' | 'food' | 'travel' | 'entertainment' | 'business' | 'lifestyle'
+
+export interface TrendInsightRequest {
+  dataDir: string
+  category: TrendCategory
+  updateCategories?: Array<Exclude<TrendCategory, 'all'>>
+  direction: string
+  snapshotIntervalMinutes: number
+  minimumSnapshots: number
+}
+
+export interface TrendVideoInsight {
+  id: string
+  sourceUrl: string
+  title: string
+  author: string
+  category: TrendCategory
+  views: number
+  likes: number
+  comments: number
+  shares: number
+  engagementRate: number
+  trendScore: number | null
+  duration: number | null
+  publishedAt: string | null
+  sourcePath: string
+  snapshotCount: number
+  viewVelocity: number | null
+  velocityMetric: 'views' | 'likes'
+  scoreMode: 'provisional' | 'trend'
+  snapshotTarget: number
+  workflowStatus: TrendVideoWorkflowStatus
+  statusUpdatedAt: string
+  growthAcceleration: number | null
+  dataStatus: 'READY_FOR_REVIEW' | 'WAITING_FOR_NEXT_SNAPSHOT'
+  rightsStatus: 'unknown' | 'requested' | 'granted' | 'denied' | 'expired'
+  recommendationStatus: 'process_now' | 'watch' | 'optional' | 'insufficient_data'
+  recommendationReason: string
+}
+
+export type TrendVideoWorkflowStatus =
+  | 'discovered'
+  | 'shortlisted'
+  | 'downloading'
+  | 'downloaded'
+  | 'processing'
+  | 'exported'
+  | 'published'
+  | 'rejected'
+
+export interface TrendManagedVideo {
+  id: string
+  title: string
+  author: string
+  sourceUrl: string
+  category: Exclude<TrendCategory, 'all'>
+  hashtags: string[]
+  coverUrl: string
+  duration: number | null
+  publishedAt: string | null
+  status: TrendVideoWorkflowStatus
+  statusUpdatedAt: string
+  firstSeenAt: string
+  lastSeenAt: string
+  collectionCount: number
+  snapshotCount: number
+  snapshotTarget: number
+  isCurrentlyTrending: boolean
+  views: number
+  likes: number
+  comments: number
+  shares: number
+  favorites: number
+  trendScore: number | null
+  scoreMode: 'provisional' | 'trend'
+  dataStatus: TrendVideoInsight['dataStatus']
+  recommendationStatus: TrendVideoInsight['recommendationStatus']
+  recommendationReason: string
+  engagementRate: number
+  viewVelocity: number | null
+  growthAcceleration: number | null
+  outputFiles: string[]
+  publishedUrl: string
+  notes: string
+}
+
+export interface TrendVideoStatusUpdate {
+  dataDir: string
+  id: string
+  status: TrendVideoWorkflowStatus
+  outputFiles?: string[]
+  publishedUrl?: string
+  notes?: string
+}
+
+export interface TrendSystemStatus {
+  code: 'LOCAL_METADATA_READY' | 'DATA_SOURCE_NOT_CONFIGURED' | 'WAITING_FOR_NEXT_SNAPSHOT' | 'INSUFFICIENT_DATA'
+  message: string
+  recommendedAction: string
+}
+
+export interface TrendPattern {
+  label: string
+  value: string
+  evidence: string
+}
+
+export interface TrendRecommendation {
+  title: string
+  rationale: string
+  confidence: 'high' | 'medium' | 'exploratory'
+}
+
+export interface TrendScoreCriterion {
+  key: 'view_velocity' | 'growth_acceleration' | 'share_rate' | 'comment_rate'
+  label: string
+  weight: number
+  description: string
+}
+
+export interface TrendRecommendationPolicy {
+  minimumSnapshots: number
+  processNowMinScore: number
+  watchMinScore: number
+  processNowRequiresAi: boolean
+  notes: string[]
+}
+
+export interface TrendInsightReport {
+  category: TrendCategory
+  direction: string
+  generatedAt: string
+  scannedFiles: number
+  matchedVideos: number
+  eligibleVideos: number
+  averageViews: number
+  averageEngagementRate: number
+  topVideos: TrendVideoInsight[]
+  patterns: TrendPattern[]
+  recommendations: TrendRecommendation[]
+  scoringCriteria: TrendScoreCriterion[]
+  recommendationPolicy: TrendRecommendationPolicy
+  warnings: string[]
+  systemStatus: TrendSystemStatus
+  aiStatus: 'READY' | 'AI_NOT_CONFIGURED'
+}
+
+export type TrendCollectionCode =
+  | 'COLLECTED'
+  | 'COOKIE_NOT_CONFIGURED'
+  | 'LOGIN_REQUIRED'
+  | 'SESSION_EXPIRED'
+  | 'CAPTCHA_DETECTED'
+  | 'RATE_LIMITED'
+  | 'PROVIDER_UNREACHABLE'
+  | 'PROVIDER_RESPONSE_INVALID'
+  | 'NO_CATEGORY_MATCH'
+
+export interface TrendCollectionStatus {
+  code: TrendCollectionCode
+  message: string
+  collectedVideos: number
+  retryable: boolean
+  recommendedAction: string
+}
+
+export type TrendInsightRunPhase = 'checking_session' | 'collecting' | 'saving' | 'analyzing' | 'finished'
+
+export interface TrendDiscoveryPreview {
+  id: string
+  title: string
+  author: string
+  views: number
+  likes: number
+  comments: number
+  shares: number
+  hashtags: string[]
+}
+
+export interface TrendDiscoveryTopic {
+  label: string
+  count: number
+}
+
+export interface TrendInsightProgress {
+  phase: TrendInsightRunPhase
+  operation: string
+  message: string
+  status: 'running' | 'completed' | 'info' | 'warning' | 'error'
+  timestamp: string
+  current?: number
+  total?: number
+  details?: Record<string, string | number | boolean | null>
+  preview?: TrendDiscoveryPreview[]
+  currentVideo?: TrendDiscoveryPreview
+  topics?: TrendDiscoveryTopic[]
+}
+
+export interface TrendInsightRunResult {
+  collection: TrendCollectionStatus
+  report: TrendInsightReport | null
 }
 
 /** Ket qua kiem tra API key. `message` di THANG len UI — khong duoc mang chi

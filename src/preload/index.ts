@@ -17,6 +17,15 @@ import {
   BurnProgress,
   BurnReq,
   BurnResult,
+  AutoPipelineProgress,
+  AutoPipelineRequest,
+  AutoPipelineResult,
+  TrendInsightReport,
+  TrendInsightRequest,
+  TrendInsightProgress,
+  TrendInsightRunResult,
+  TrendManagedVideo,
+  TrendVideoStatusUpdate,
   GeminiStatus,
   LogEntry,
   OcrEngineStatus,
@@ -118,6 +127,30 @@ const api = {
   dyChannels: (): Promise<DyChannel[]> => ipcRenderer.invoke('douyin:channels'),
   dyRemoveChannel: (url: string): Promise<DyChannel[]> =>
     ipcRenderer.invoke('douyin:removeChannel', url),
+
+  // ---- Automated local pipeline ----
+  automationRun: (id: string, req: AutoPipelineRequest): Promise<AutoPipelineResult> =>
+    ipcRenderer.invoke('automation:run', id, req),
+  onAutomationProgress: (cb: (p: AutoPipelineProgress) => void): (() => void) => {
+    const listener = (_e: unknown, p: AutoPipelineProgress): void => cb(p)
+    ipcRenderer.on('automation:progress', listener)
+    return () => ipcRenderer.removeListener('automation:progress', listener)
+  },
+
+  // ---- Local trend insights ----
+  analyzeTrends: (req: TrendInsightRequest): Promise<TrendInsightReport> =>
+    ipcRenderer.invoke('insights:analyze', req),
+  runTrendInsights: (req: TrendInsightRequest): Promise<TrendInsightRunResult> =>
+    ipcRenderer.invoke('insights:run', req),
+  onTrendInsightProgress: (cb: (progress: TrendInsightProgress) => void): (() => void) => {
+    const listener = (_event: unknown, progress: TrendInsightProgress): void => cb(progress)
+    ipcRenderer.on('insights:progress', listener)
+    return () => ipcRenderer.removeListener('insights:progress', listener)
+  },
+  managedTrendVideos: (dataDir: string): Promise<TrendManagedVideo[]> =>
+    ipcRenderer.invoke('insights:videos', dataDir),
+  updateTrendVideoStatus: (update: TrendVideoStatusUpdate): Promise<TrendManagedVideo | null> =>
+    ipcRenderer.invoke('insights:updateVideoStatus', update),
 
   // ---- Audio -> Text (whisper) ----
   whisperEngineStatus: (): Promise<WhisperEngineStatus> =>

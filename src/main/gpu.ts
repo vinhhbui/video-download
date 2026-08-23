@@ -46,7 +46,9 @@ export async function detectGpu(): Promise<GpuInfo> {
 
   // 2) CUDA Version (chi hien o header cua `nvidia-smi` thuong, khong co trong --query)
   const p = await run('nvidia-smi', [])
-  const m = p.out.match(/CUDA\s*Version:\s*([0-9]+)\.([0-9]+)/i)
+  // New NVIDIA drivers may label this field as "CUDA UMD Version".
+  // Accept both formats so GPU acceleration remains available after driver updates.
+  const m = p.out.match(/CUDA(?:\s+UMD)?\s*Version:\s*([0-9]+)\.([0-9]+)/i)
   const cudaMajor = m ? Number(m[1]) : null
   const cudaVersion = m ? `${m[1]}.${m[2]}` : null
 

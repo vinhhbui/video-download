@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { CookieCaptureEvent, CookieCaptureResult, DyCookieStatus } from '../shared/types'
 
 // Cookie Douyin rieng (khac cookie YouTube). Dung partition rieng de khong lan lon.
-const DY_PARTITION = 'persist:tblao-douyin'
+export const DY_PARTITION = 'persist:tblao-douyin'
 
 export function dyCookiesPath(): string {
   return join(app.getPath('userData'), 'douyin-cookies.json')

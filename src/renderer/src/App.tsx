@@ -5,21 +5,21 @@ import Downloader from './components/Downloader'
 import Douyin from './components/Douyin'
 import AudioText from './components/AudioText'
 import ScreenText from './components/ScreenText'
+import AutoPipeline from './components/AutoPipeline'
+import TrendInsights from './components/TrendInsights'
+import VideoManager from './components/VideoManager'
 import License from './components/License'
 import Logs from './components/Logs'
-import qrImg from './assets/qr.jpg'
 import type { UpdateStatus } from '../../shared/types'
 
 const REPO_URL = 'https://github.com/NeeyuBL/neeyut-blao'
-const LIEN_HE_URL = 'https://t.me/neeyutblao'
 
 type Stage = 'checking' | 'setup' | 'ready'
-type TabKey = 'download' | 'douyin' | 'audiotext' | 'screen' | 'logs' | 'license'
+type TabKey = 'download' | 'douyin' | 'audiotext' | 'screen' | 'automation' | 'insights' | 'videos' | 'logs' | 'license'
 
 interface Tab {
   key: TabKey
   label: string
-  icon: string
   title: string
   subtitle: string
 }
@@ -27,30 +27,44 @@ interface Tab {
 // Tab tinh nang chinh (o tren). Them tinh nang moi = them 1 entry vao day.
 const TABS: Tab[] = [
   {
+    key: 'automation',
+    label: 'Tự động',
+    title: 'Trung tâm tự động',
+    subtitle: 'Thiết kế, chạy và theo dõi workflow video'
+  },
+  {
+    key: 'insights',
+    label: 'Insights',
+    title: 'Insights xu hướng',
+    subtitle: 'Tín hiệu, category và đề xuất video tiếp theo'
+  },
+  {
+    key: 'videos',
+    label: 'Quản lý video',
+    title: 'Quản lý video đề xuất',
+    subtitle: 'Theo dõi snapshot, file đầu ra và trạng thái đăng video'
+  },
+  {
     key: 'download',
     label: 'Tải xuống',
-    icon: '⬇',
     title: 'Tải xuống',
     subtitle: 'Video & âm thanh đa nền tảng'
   },
   {
     key: 'douyin',
     label: 'Douyin',
-    icon: '🎬',
     title: 'Tải Douyin',
     subtitle: 'Video & kênh Douyin (không watermark)'
   },
   {
     key: 'audiotext',
     label: 'Phụ đề',
-    icon: '📝',
     title: 'Audio → Text',
     subtitle: 'Tạo phụ đề .srt từ giọng nói bằng AI'
   },
   {
     key: 'screen',
     label: 'Dịch màn hình',
-    icon: '🔍',
     title: 'Dịch màn hình',
     // Anh em voi tab Phu de: mot ben tu TIENG, mot ben tu HINH.
     // Danh cho video chi co chu chay, khong co tieng -> tab Phu de bo tay.
@@ -63,14 +77,12 @@ const BOTTOM_TABS: Tab[] = [
   {
     key: 'logs',
     label: 'Nhật ký',
-    icon: '📋',
     title: 'Nhật ký hoạt động',
     subtitle: 'Theo dõi hoạt động & lỗi phát sinh'
   },
   {
     key: 'license',
     label: 'Giấy phép',
-    icon: '📜',
     title: 'Giấy phép & Điều khoản',
     subtitle: 'Bản quyền và trách nhiệm sử dụng'
   }
@@ -78,16 +90,14 @@ const BOTTOM_TABS: Tab[] = [
 
 export default function App(): JSX.Element {
   const [stage, setStage] = useState<Stage>('checking')
-  // KHONG nho tab cuoi — moi lan mo app deu ve tab mac dinh (Tai xuong).
-  // Chi nho cau hinh user setup cho tung tab (qua usePersistedState trong moi component).
-  const [tab, setTab] = useState<TabKey>('download')
+  // Always open the automation dashboard while preserving each tab's saved settings.
+  const [tab, setTab] = useState<TabKey>('automation')
   const [version, setVersion] = useState('')
   const [update, setUpdate] = useState<UpdateStatus | null>(null)
   // Thu muc luu dung CHUNG cho moi tab; nho qua cac lan mo app
   const [outputDir, setOutputDir] = useState('')
   // "Hop thu" gui file tu tab Tai xuong sang tab Audio->Text (nut "Lay sub")
   const [subInbox, setSubInbox] = useState<{ path: string; id: string } | null>(null)
-  const [hienQr, setHienQr] = useState(false) // bang QR ung ho (nut Cafe)
 
   const sendToSub = (filePath: string): void => {
     setSubInbox({ path: filePath, id: crypto.randomUUID() })
@@ -119,16 +129,6 @@ export default function App(): JSX.Element {
     return offUpd
   }, [])
 
-  // Bam Esc dong bang QR
-  useEffect(() => {
-    if (!hienQr) return
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setHienQr(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [hienQr])
-
   if (stage === 'checking') {
     return (
       <div className="boot">
@@ -156,45 +156,32 @@ export default function App(): JSX.Element {
       className={`side-item ${t.key === tab ? 'active' : ''}`}
       onClick={() => setTab(t.key)}
     >
-      <span className="side-ico">{t.icon}</span>
       <span>{t.label}</span>
     </button>
   )
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="sidebar">
         <div className="side-brand">
           <span className="side-logo">T-blao</span>
         </div>
         <nav className="side-nav">{TABS.map(renderTab)}</nav>
-        <div className="side-hint muted small">Sắp có thêm tính năng…</div>
-
         <div className="side-bottom">
           {BOTTOM_TABS.map(renderTab)}
-
-          {/* Lien ket: GitHub / Lien he / Cafe (ung ho) — duoi muc Giay phep */}
           <div className="side-links">
             <button className="side-link" onClick={() => window.api.openExternal(REPO_URL)}>
-              <span className="side-link-ico">🐙</span> GitHub
-            </button>
-            <button className="side-link" onClick={() => window.api.openExternal(LIEN_HE_URL)}>
-              <span className="side-link-ico">✈️</span> Liên hệ
-            </button>
-            <button className="side-link" onClick={() => setHienQr(true)}>
-              <span className="side-link-ico">☕</span> Cafe
+              GitHub
             </button>
           </div>
-
           <div className="side-version">Phiên bản {version || '…'}</div>
-
           {update?.state === 'downloaded' && (
             <button
               className="side-update ready"
               onClick={() => window.api.installAppUpdate()}
               title="Khởi động lại để cài bản mới"
             >
-              🎉 Có bản mới {update.version} — Cập nhật ngay
+              Có bản mới {update.version} — Cập nhật ngay
             </button>
           )}
           {update?.state === 'downloading' && (
@@ -204,7 +191,7 @@ export default function App(): JSX.Element {
             <div className="side-update">Đã có bản {update.version}, đang tải…</div>
           )}
         </div>
-      </aside>
+      </header>
 
       <main className="content">
         <header className="content-head">
@@ -212,6 +199,7 @@ export default function App(): JSX.Element {
             <h1 className="content-title">{active.title}</h1>
             <p className="content-sub muted">{active.subtitle}</p>
           </div>
+          <div className="content-head-meta">Local workflow manager</div>
         </header>
         <div className="content-body">
           {/* Giu 2 tab tai luon SONG (khong unmount) de chay song song, khong mat hang doi/tien do */}
@@ -238,28 +226,18 @@ export default function App(): JSX.Element {
           <div className={`tab-pane ${tab === 'screen' ? '' : 'hidden'}`}>
             <ScreenText outputDir={outputDir} setOutputDir={updateOutputDir} />
           </div>
+          <div className={`tab-pane ${tab === 'automation' ? '' : 'hidden'}`}>
+            <AutoPipeline outputDir={outputDir} setOutputDir={updateOutputDir} onNavigate={setTab} />
+          </div>
+          <div className={`tab-pane ${tab === 'insights' ? '' : 'hidden'}`}>
+            <TrendInsights outputDir={outputDir} setOutputDir={updateOutputDir} />
+          </div>
+          {tab === 'videos' && <VideoManager outputDir={outputDir} />}
           {tab === 'logs' && <Logs />}
           {tab === 'license' && <License />}
         </div>
       </main>
 
-      {/* Bang QR ung ho (nut Cafe) — bam ra ngoai / X / Esc de dong */}
-      {hienQr && (
-        <div className="modal-nen" onClick={() => setHienQr(false)}>
-          <div className="modal qr-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <span className="modal-title">☕ Mời mình một ly cafe</span>
-              <button className="modal-x" onClick={() => setHienQr(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body qr-body">
-              <img src={qrImg} alt="Mã QR ủng hộ" className="qr-img" />
-              <p className="muted small">Cảm ơn bạn đã ủng hộ T-blao 💛</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
